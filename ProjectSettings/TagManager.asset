@@ -7,6 +7,11 @@ TagManager:
   - Hammer
   - Knife
   - Sword
+  - Red
+  - Yellow
+  - Green
+  - DynamicObject
+  - Movible
   layers:
   - Default
   - TransparentFX
@@ -14,7 +19,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - DynamicObjects
   - 
   - 
   - 
