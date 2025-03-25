@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b88ef0001b70e934bb70328a44dcc1e9, type: 3}
   m_Name: ShapeData
   m_EditorClassIdentifier: 
-  _shapePrefabs:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  _shapes:
+  - {fileID: 1338690466516843458, guid: 14f39db1e0edd424eba428721296bd1a, type: 3}
+  - {fileID: 6415345952563488678, guid: 0af9cce4025e6114fba14a637c060370, type: 3}
+  - {fileID: 4785509697725528157, guid: 9476dad541b4d1843911d081c138ecc0, type: 3}

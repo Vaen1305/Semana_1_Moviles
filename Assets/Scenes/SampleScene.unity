@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 4647305}
   - component: {fileID: 4647304}
   - component: {fileID: 4647303}
+  - component: {fileID: 4647307}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Red
@@ -225,6 +226,29 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &4647307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4647302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9328b92cfaa4f634ca67fcda340e11d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _shapeButtons:
+  - {fileID: 1308164988}
+  - {fileID: 1700189608}
+  - {fileID: 1761365337}
+  _colorButtons:
+  - {fileID: 440294611}
+  - {fileID: 889830031}
+  - {fileID: 202607902}
+  _touchController: {fileID: 1482823626}
+  _shapeData: {fileID: 11400000, guid: ce4a16e5ce7d14f47a72768c90eacd5a, type: 2}
+  _colorData: {fileID: 11400000, guid: 988b5dc5b89f9134fb1e4452cc016f51, type: 2}
 --- !u!1 &202607900
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,6 +513,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 440294609}
   m_CullTransparentMesh: 1
+--- !u!1 &616303497
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 616303499}
+  - component: {fileID: 616303498}
+  m_Layer: 0
+  m_Name: Spawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &616303498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616303497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e619b58661e486d4ea5da3b0762b5fef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _touchManager: {fileID: 1482823626}
+  _trailPrefab: {fileID: 2727975468032233910, guid: 4dce8c770d3a38a4da70e4fdeac8f37e, type: 3}
+--- !u!4 &616303499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616303497}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 926.906, y: 443.096, z: -5.860019}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,25 +1123,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cce1349cff366c42bfc60ff8ae5e89b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  coloresDisponibles:
-  - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 1, g: 0.9094448, b: 0, a: 1}
-  - {r: 0.5447296, g: 1, b: 0, a: 1}
-  prefabsFormas:
-  - {fileID: 1338690466516843458, guid: 14f39db1e0edd424eba428721296bd1a, type: 3}
-  - {fileID: 6415345952563488678, guid: 0af9cce4025e6114fba14a637c060370, type: 3}
-  - {fileID: 4785509697725528157, guid: 9476dad541b4d1843911d081c138ecc0, type: 3}
-  sensibilidadSwipe: 150
-  tiempoMaxSwipe: 0.5
-  trailPrefab: {fileID: 2727975468032233910, guid: 4dce8c770d3a38a4da70e4fdeac8f37e, type: 3}
-  botonesColor:
-  - {fileID: 440294611}
-  - {fileID: 889830031}
-  - {fileID: 202607902}
-  botonesForma:
-  - {fileID: 1308164988}
-  - {fileID: 1700189608}
-  - {fileID: 1761365337}
+  _swipeThreshold: 150
+  _doubleTapTime: 0.3
+  shapeData: {fileID: 11400000, guid: ce4a16e5ce7d14f47a72768c90eacd5a, type: 2}
+  colorData: {fileID: 11400000, guid: 988b5dc5b89f9134fb1e4452cc016f51, type: 2}
+  touchEvents:
+    OnTap:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 616303498}
+          m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
+          m_MethodName: SpawnObject
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    OnSwipe:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 616303498}
+          m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
+          m_MethodName: OnSwipe
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+    OnDoubleTap:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 616303498}
+          m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
+          m_MethodName: DeleteObject
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!4 &1482823627
 Transform:
   m_ObjectHideFlags: 0
@@ -1516,3 +1617,4 @@ SceneRoots:
   - {fileID: 4647306}
   - {fileID: 741089827}
   - {fileID: 1482823627}
+  - {fileID: 616303499}

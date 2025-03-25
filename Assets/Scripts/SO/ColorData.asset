@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: ColorData
   m_EditorClassIdentifier: 
   _colors:
-  - {r: 0, g: 0, b: 0, a: 0}
-  - {r: 0, g: 0, b: 0, a: 0}
-  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0.96173024, g: 1, b: 0, a: 1}
+  - {r: 0.37071252, g: 1, b: 0, a: 1}
