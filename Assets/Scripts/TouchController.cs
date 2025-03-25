@@ -1,282 +1,133 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using System.Collections;
-using System.Collections.Generic;
 
-public class TouchControl : MonoBehaviour
+public class TouchController : MonoBehaviour
 {
-    [Header("Opciones Principales")]
-    [SerializeField] Color[] coloresDisponibles = new Color[3];
-    [SerializeField] GameObject[] prefabsFormas = new GameObject[3];
-    [SerializeField] float sensibilidadSwipe = 150f;
-    [SerializeField] float tiempoMaxSwipe = 0.5f;
-    [SerializeField] TrailRenderer trailPrefab;
-
-    [Header("Botones Interfaz")]
-    [SerializeField] Button[] botonesColor = new Button[3];
-    [SerializeField] Button[] botonesForma = new Button[3];
-
-    private int colorSeleccionado = 0;
-    private int formaSeleccionada = 0;
-    private float ultimoToque;
-    private Vector2 posicionInicialSwipe;
-    private float tiempoInicialSwipe;
-    private GameObject objetoArrastrado;
-    private List<GameObject> objetosCreados = new List<GameObject>();
-    private TrailRenderer trailActual;
-
-    void Start()
+    [System.Serializable]
+    public class TouchEvents
     {
-        ConfigurarInterfaz();
-        if (trailPrefab != null) trailPrefab.gameObject.SetActive(false);
-        
-        if(prefabsFormas.Length != 3 || prefabsFormas[0] == null || prefabsFormas[1] == null || prefabsFormas[2] == null){
-            Debug.LogError("Asigna los 3 prefabs de formas en el Inspector!");
-        }
+        public UnityEvent<Vector2> OnTap = new UnityEvent<Vector2>();
+        public UnityEvent<Vector2> OnSwipe = new UnityEvent<Vector2>();
+        public UnityEvent<Vector2> OnDoubleTap = new UnityEvent<Vector2>();
     }
 
-    void ConfigurarInterfaz()
-    {
-        for(int i = 0; i < 3; i++)
-        {
-            botonesColor[i].GetComponent<Image>().color = coloresDisponibles[i];
-            int indiceColor = i;
-            botonesColor[i].onClick.AddListener(() => SeleccionarColor(indiceColor));
+    [Header("Configuración")]
+    [SerializeField] float _swipeThreshold = 150f;
+    [SerializeField] float _doubleTapTime = 0.3f;
 
-            Sprite spriteForma = prefabsFormas[i].GetComponent<SpriteRenderer>().sprite;
-            botonesForma[i].GetComponent<Image>().sprite = spriteForma;
-            int indiceForma = i;
-            botonesForma[i].onClick.AddListener(() => SeleccionarForma(indiceForma));
-        }
-    }
+    [Header("Datos")]
+    [SerializeField] public ShapeData shapeData;
+    [SerializeField] public ColorData colorData;
+
+    [Header("Eventos")]
+    public TouchEvents touchEvents = new TouchEvents();
+
+    public int CurrentShapeIndex { get; private set; }
+    public int CurrentColorIndex { get; private set; }
+
+    private Vector2 _touchStartPos;
+    private float _lastTapTime;
+    private GameObject _draggedObject;
 
     void Update()
     {
-        if(Input.touchCount > 0)
+        if (Input.touchCount > 0 && !IsOverUI(Input.GetTouch(0)))
         {
-            Touch toque = Input.GetTouch(0);
-            
-            if(!EstaTocandoUI(toque))
-            {
-                ManejarToque(toque);
-            }
+            ProcessTouch(Input.GetTouch(0));
         }
     }
 
-    void ManejarToque(Touch toque)
+    void ProcessTouch(Touch touch)
     {
-        switch(toque.phase)
+        switch (touch.phase)
         {
             case TouchPhase.Began:
-                IniciarToque(toque);
+                HandleTouchStart(touch);
                 break;
 
             case TouchPhase.Moved:
-                MoverToque(toque);
+                HandleTouchMove(touch);
                 break;
 
             case TouchPhase.Ended:
-                FinalizarToque(toque);
+                HandleTouchEnd(touch);
                 break;
         }
     }
 
-    void IniciarToque(Touch toque)
+    void HandleTouchStart(Touch touch)
     {
-        posicionInicialSwipe = toque.position;
-        tiempoInicialSwipe = Time.time;
+        Debug.Log("Touch detectado en posición: " + touch.position);
 
-        Collider2D colision = Physics2D.OverlapPoint(ConvertirPosicion(toque.position));
-        if(colision != null && colision.CompareTag("Movible"))
+        _touchStartPos = touch.position;
+
+        if (Time.time - _lastTapTime < _doubleTapTime)
         {
-            StartCoroutine(DetectarArrastre(toque));
+            touchEvents.OnDoubleTap.Invoke(touch.position);
+            _lastTapTime = 0;
         }
         else
         {
-            IniciarTrail(toque.position);
+            _lastTapTime = Time.time;
         }
+
+        DetectDraggableObject(touch.position);
     }
 
-    System.Collections.IEnumerator DetectarArrastre(Touch toque)
+    void HandleTouchMove(Touch touch)
     {
-        float tiempoPresionado = 0f;
-        Vector2 posicionInicial = toque.position;
+        Debug.Log("Moviendo touch: " + touch.deltaPosition);
 
-        while(tiempoPresionado < 0.2f && toque.phase == TouchPhase.Stationary)
+        if (_draggedObject != null)
         {
-            tiempoPresionado += Time.deltaTime;
-            yield return null;
+            _draggedObject.transform.position = GetWorldPos(touch.position);
         }
 
-        if(tiempoPresionado >= 0.2f)
+        if (Vector2.Distance(touch.position, _touchStartPos) > _swipeThreshold)
         {
-            PrepararArrastre(toque.position);
+            touchEvents.OnSwipe.Invoke(touch.position - _touchStartPos);
         }
     }
 
-    void PrepararArrastre(Vector2 posicionToque)
+    void HandleTouchEnd(Touch touch)
     {
-        Collider2D colision = Physics2D.OverlapPoint(ConvertirPosicion(posicionToque));
-        if(colision != null)
+        if (_draggedObject != null)
         {
-            objetoArrastrado = colision.gameObject;
+            _draggedObject = null;
         }
     }
 
-    void MoverToque(Touch toque)
+    void DetectDraggableObject(Vector2 screenPos)
     {
-        if(objetoArrastrado != null)
+        Vector3 worldPos = GetWorldPos(screenPos);
+        RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+
+        if (hit.collider != null && hit.collider.CompareTag("Draggable"))
         {
-            ArrastrarObjeto(toque.position);
-        }
-        ActualizarTrail(toque.position);
-    }
-
-    void ArrastrarObjeto(Vector2 posicionToque)
-    {
-        Vector3 nuevaPosicion = ConvertirPosicion(posicionToque);
-        nuevaPosicion.z = objetoArrastrado.transform.position.z;
-        objetoArrastrado.transform.position = nuevaPosicion;
-    }
-
-    void FinalizarToque(Touch toque)
-    {
-        if(objetoArrastrado != null)
-        {
-            objetoArrastrado = null;
-        }
-        else
-        {
-            VerificarAcciones(toque);
-        }
-        DetenerTrail();
-    }
-
-    void VerificarAcciones(Touch toque)
-    {
-        if(EsSwipe(toque))
-        {
-            LimpiarPantalla();
-        }
-        else
-        {
-            ManejarToquesRapidos(toque);
+            _draggedObject = hit.collider.gameObject;
         }
     }
 
-    bool EsSwipe(Touch toque)
+    Vector3 GetWorldPos(Vector2 screenPos)
     {
-        Vector2 diferencia = toque.position - posicionInicialSwipe;
-        float duracion = Time.time - tiempoInicialSwipe;
-        return diferencia.magnitude > sensibilidadSwipe && duracion < tiempoMaxSwipe;
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
+        worldPos.z = 0;
+        return worldPos;
     }
 
-    void ManejarToquesRapidos(Touch toque)
+    bool IsOverUI(Touch touch)
     {
-        float tiempoDesdeUltimoToque = Time.time - ultimoToque;
-        
-        if(tiempoDesdeUltimoToque < 0.4f)
-        {
-            EliminarObjeto(toque.position);
-            ultimoToque = 0;
-        }
-        else
-        {
-            CrearObjeto(toque.position);
-            ultimoToque = Time.time;
-        }
+        return EventSystem.current.IsPointerOverGameObject(touch.fingerId);
     }
 
-    void IniciarTrail(Vector2 posicion)
+    public void SetSelectedShape(int index)
     {
-        if(trailPrefab != null)
-        {
-            trailActual = Instantiate(trailPrefab, ConvertirPosicion(posicion), Quaternion.identity);
-            trailActual.startColor = coloresDisponibles[colorSeleccionado];
-            trailActual.endColor = coloresDisponibles[colorSeleccionado];
-            trailActual.gameObject.SetActive(true);
-        }
+        CurrentShapeIndex = Mathf.Clamp(index, 0, 2);
     }
 
-    void ActualizarTrail(Vector2 posicion)
+    public void SetSelectedColor(int index)
     {
-        if(trailActual != null)
-        {
-            trailActual.transform.position = ConvertirPosicion(posicion);
-        }
+        CurrentColorIndex = Mathf.Clamp(index, 0, 2);
     }
-
-    void DetenerTrail()
-    {
-        if(trailActual != null)
-        {
-            Destroy(trailActual.gameObject, trailActual.time);
-            trailActual = null;
-        }
-    }
-
-    void CrearObjeto(Vector2 posicionPantalla)
-    {
-        if(prefabsFormas[formaSeleccionada] == null) return;
-
-        Vector3 posicionMundo = ConvertirPosicion(posicionPantalla);
-        GameObject nuevoObjeto = Instantiate(prefabsFormas[formaSeleccionada], posicionMundo, Quaternion.identity);
-        ConfigurarNuevoObjeto(nuevoObjeto);
-        objetosCreados.Add(nuevoObjeto);
-    }
-
-    void ConfigurarNuevoObjeto(GameObject obj)
-    {
-        SpriteRenderer renderer = obj.GetComponent<SpriteRenderer>();
-        if(renderer != null) renderer.color = coloresDisponibles[colorSeleccionado];
-        
-        if(obj.GetComponent<Collider2D>() == null)
-        {
-            obj.AddComponent<BoxCollider2D>();
-        }
-        obj.tag = "Movible";
-    }
-
-    void EliminarObjeto(Vector2 posicionPantalla)
-    {
-        Collider2D[] colisiones = Physics2D.OverlapCircleAll(ConvertirPosicion(posicionPantalla), 0.5f);
-        
-        for(int i = 0; i < colisiones.Length; ++i)
-        {
-            if(colisiones[i].CompareTag("Movible"))
-            {
-                objetosCreados.Remove(colisiones[i].gameObject);
-                Destroy(colisiones[i].gameObject);
-                break;
-            }
-        }
-    }
-
-    void LimpiarPantalla()
-    {
-        for(int i = objetosCreados.Count - 1; i >= 0; --i)
-        {
-            if(objetosCreados[i] != null)
-            {
-                Destroy(objetosCreados[i]);
-            }
-        }
-        objetosCreados.Clear();
-    }
-
-    Vector3 ConvertirPosicion(Vector2 posicionPantalla)
-    {
-        Vector3 posicionMundo = Camera.main.ScreenToWorldPoint(posicionPantalla);
-        posicionMundo.z = 0;
-        return posicionMundo;
-    }
-
-    bool EstaTocandoUI(Touch toque)
-    {
-        return EventSystem.current.IsPointerOverGameObject(toque.fingerId);
-    }
-
-    public void SeleccionarColor(int indice) => colorSeleccionado = Mathf.Clamp(indice, 0, 2);
-    public void SeleccionarForma(int indice) => formaSeleccionada = Mathf.Clamp(indice, 0, 2);
 }
